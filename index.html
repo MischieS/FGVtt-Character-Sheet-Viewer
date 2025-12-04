@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fantasy Grounds Character Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-root">
+    <header class="fg-header">
+      <div class="fg-header-left">
+        <div class="portrait-slot"></div>
+      </div>
+      <div class="fg-header-center">
+        <div class="label-row">
+          <span class="label">NAME</span>
+        </div>
+        <div class="field-row">
+          <div id="char-name" class="field field-long"></div>
+        </div>
+      </div>
+      <div class="fg-header-right">
+        <div class="insp-button">INSP</div>
+        <div class="insp-dots">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="fg-layout">
+      <main class="fg-main">
+        <section class="fg-sheet">
+        <div class="toolbar">
+          <label class="file-input-label">
+            Load XML
+            <input type="file" id="xmlInput" accept=".xml" />
+          </label>
+          <span id="file-status" class="file-status">No file loaded</span>
+        </div>
+
+        <div class="tab-content active" id="tab-main">
+          <div class="panel-row top-row">
+            <section class="panel panel-abilities">
+              <div class="panel-header">ABILITIES</div>
+              <div class="abilities-grid">
+                <div class="ability" data-ability="strength">
+                  <div class="ability-label">STR</div>
+                  <div class="ability-score" data-field="score"></div>
+                  <div class="ability-mod" data-field="bonus"></div>
+                </div>
+                <div class="ability" data-ability="dexterity">
+                  <div class="ability-label">DEX</div>
+                  <div class="ability-score" data-field="score"></div>
+                  <div class="ability-mod" data-field="bonus"></div>
+                </div>
+                <div class="ability" data-ability="constitution">
+                  <div class="ability-label">CON</div>
+                  <div class="ability-score" data-field="score"></div>
+                  <div class="ability-mod" data-field="bonus"></div>
+                </div>
+                <div class="ability" data-ability="intelligence">
+                  <div class="ability-label">INT</div>
+                  <div class="ability-score" data-field="score"></div>
+                  <div class="ability-mod" data-field="bonus"></div>
+                </div>
+                <div class="ability" data-ability="wisdom">
+                  <div class="ability-label">WIS</div>
+                  <div class="ability-score" data-field="score"></div>
+                  <div class="ability-mod" data-field="bonus"></div>
+                </div>
+                <div class="ability" data-ability="charisma">
+                  <div class="ability-label">CHA</div>
+                  <div class="ability-score" data-field="score"></div>
+                  <div class="ability-mod" data-field="bonus"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel panel-core">
+              <div class="panel-header">CLASS &amp; LEVEL</div>
+              <div class="panel-body core-grid">
+                <div class="core-row">
+                  <span class="core-label">Class</span>
+                  <div id="char-class" class="field"></div>
+                  <span class="core-label">Level</span>
+                  <div id="char-level" class="field small"></div>
+                </div>
+                <div class="core-row">
+                  <span class="core-label">Background</span>
+                  <div id="char-background" class="field"></div>
+                  <span class="core-label">Race</span>
+                  <div id="char-race" class="field"></div>
+                </div>
+                <div class="core-row">
+                  <span class="core-label">AC</span>
+                  <div id="char-ac" class="field tiny"></div>
+                  <span class="core-label">INIT</span>
+                  <div id="char-init" class="field tiny"></div>
+                  <span class="core-label">SPEED</span>
+                  <div id="char-speed" class="field tiny"></div>
+                  <span class="core-label">PERC</span>
+                  <div id="char-perception" class="field tiny"></div>
+                </div>
+                <div class="core-row">
+                  <span class="core-label">HP</span>
+                  <div id="char-hp" class="field tiny"></div>
+                  <span class="core-label">HD</span>
+                  <div id="char-hd" class="field tiny"></div>
+                  <span class="core-label">Prof</span>
+                  <div id="char-prof" class="field tiny"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel panel-weapons">
+            <div class="panel-header">WEAPONS</div>
+            <table class="table table-weapons">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Attack</th>
+                  <th>Damage</th>
+                  <th>Properties</th>
+                </tr>
+              </thead>
+              <tbody id="weapons-body"></tbody>
+            </table>
+          </section>
+
+          <section class="panel panel-spells">
+            <div class="panel-header">SPELLS</div>
+            <div class="spell-groups" id="spells-main"></div>
+          </section>
+        </div>
+
+        <div class="tab-content" id="tab-skills">
+          <section class="panel">
+            <div class="panel-header">SKILLS</div>
+            <table class="table table-skills">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Stat</th>
+                  <th>Misc</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="skills-body"></tbody>
+            </table>
+          </section>
+        </div>
+
+        <div class="tab-content" id="tab-abilities">
+          <section class="panel">
+            <div class="panel-header">FEATS</div>
+            <ul id="feats-list" class="text-list"></ul>
+          </section>
+          <section class="panel">
+            <div class="panel-header">FEATURES</div>
+            <ul id="features-list" class="text-list"></ul>
+          </section>
+          <section class="panel">
+            <div class="panel-header">TRAITS</div>
+            <ul id="traits-list" class="text-list"></ul>
+          </section>
+          <section class="panel">
+            <div class="panel-header">PROFICIENCIES</div>
+            <ul id="profs-list" class="text-list"></ul>
+          </section>
+          <section class="panel">
+            <div class="panel-header">LANGUAGES</div>
+            <ul id="languages-list" class="text-list"></ul>
+          </section>
+        </div>
+
+        <div class="tab-content" id="tab-inventory">
+          <section class="panel">
+            <div class="panel-header">EQUIPMENT</div>
+            <table class="table table-inventory">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Wt</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-body"></tbody>
+            </table>
+          </section>
+          <section class="panel">
+            <div class="panel-header">TREASURE</div>
+            <div class="coins-row" id="coins-row"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">ENCUMBRANCE</div>
+            <div class="encumbrance-grid">
+              <div><span>Max</span><div id="enc-max" class="field tiny"></div></div>
+              <div><span>Current</span><div id="enc-load" class="field tiny"></div></div>
+              <div><span>Lift/Push/Drag</span><div id="enc-lpd" class="field tiny"></div></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="tab-content" id="tab-notes">
+          <section class="panel">
+            <div class="panel-header">NOTES</div>
+            <div id="notes-content" class="notes-content empty">No narrative notes in this export.</div>
+          </section>
+        </div>
+
+        <div class="tab-content" id="tab-actions">
+          <section class="panel">
+            <div class="panel-header">ACTIONS / POWERS</div>
+            <div id="actions-body" class="actions-list"></div>
+          </section>
+        </div>
+      </section>
+      </main>
+
+      <nav class="fg-tabs-vertical">
+        <button class="tab-button active" data-tab="main">Main</button>
+        <button class="tab-button" data-tab="skills">Skills</button>
+        <button class="tab-button" data-tab="abilities">Abilities</button>
+        <button class="tab-button" data-tab="inventory">Inventory</button>
+        <button class="tab-button" data-tab="notes">Notes</button>
+        <button class="tab-button" data-tab="actions">Actions</button>
+      </nav>
+    </div>
+  </div>
+
+  <script src="descriptions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

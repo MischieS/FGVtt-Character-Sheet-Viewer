@@ -642,7 +642,7 @@ body {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr) 150px;
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .main-abilities,
@@ -658,7 +658,8 @@ body {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: space-evenly;
+  height: 100%;
 }
 
 .info-strip {
@@ -1138,19 +1139,6 @@ body {
   gap: 4px;
 }
 
-.encumbrance-grid {
-  display: flex;
-  gap: 16px;
-  padding: 8px;
-  font-size: 13px;
-}
-
-.encumbrance-grid span {
-  display: block;
-  font-size: 11px;
-  color: var(--fg-text-muted);
-}
-
 /* Lists / text areas */
 
 .text-list {
@@ -1223,12 +1211,6 @@ body {
         </div>
         <div class="field-row">
           <div id="char-name" class="field field-long"></div>
-        </div>
-      </div>
-      <div class="fg-header-right">
-        <div class="insp-button">INSP</div>
-        <div class="insp-dots">
-          <span></span><span></span><span></span><span></span><span></span>
         </div>
       </div>
     </header>
@@ -1324,6 +1306,10 @@ body {
 
                 <div class="stat-row">
                   <div class="stat-card">
+                    <span class="stat-label">HP</span>
+                    <div id="char-hp" class="field hp-total"></div>
+                  </div>
+                  <div class="stat-card">
                     <span class="stat-label">AC</span>
                     <div id="char-ac" class="field stat-field"></div>
                   </div>
@@ -1348,38 +1334,6 @@ body {
                   </div>
                 </div>
 
-              </div>
-
-              <div class="hp-panel">
-                <div class="hp-stats hp-stats-bottom">
-                  <div class="hp-stat">
-                    <span class="hp-stat-label">HP</span>
-                    <div class="hp-stat-fields">
-                      <div id="hp-wounds" class="field hp-field hp-field-small"></div>
-                      <div id="char-hp" class="field hp-total"></div>
-                      <div id="hp-temp" class="field hp-field hp-field-small"></div>
-                    </div>
-                  </div>
-                  <div class="hp-stat">
-                    <span class="hp-stat-label">HD</span>
-                    <div class="hp-stat-fields">
-                      <div id="char-hd" class="field hp-field hp-field-hd"></div>
-                    </div>
-                  </div>
-                  <div class="hp-stat death-save">
-                    <span class="hp-stat-label">Death Saves</span>
-                    <div class="hp-stat-fields death-save-fields">
-                      <span class="death-label">S</span>
-                      <div class="death-dots">
-                        <span></span><span></span><span></span>
-                      </div>
-                      <span class="death-label">F</span>
-                      <div class="death-dots">
-                        <span></span><span></span><span></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1421,7 +1375,7 @@ body {
             <div class="skills-header">
               <span class="skills-heading skills-col-name">NAME</span>
               <span class="skills-heading">STAT</span>
-              <span class="skills-heading">MISC</span>
+              <span class="skills-heading">PROF</span>
               <span class="skills-heading">TOTAL</span>
             </div>
             <ul id="skills-body" class="skills-list"></ul>
@@ -1492,14 +1446,6 @@ body {
             <div class="panel-header">TREASURE</div>
             <div class="coins-row" id="coins-row"></div>
           </section>
-          <section class="panel">
-            <div class="panel-header">ENCUMBRANCE</div>
-            <div class="encumbrance-grid">
-              <div><span>Max</span><div id="enc-max" class="field tiny"></div></div>
-              <div><span>Current</span><div id="enc-load" class="field tiny"></div></div>
-              <div><span>Lift/Push/Drag</span><div id="enc-lpd" class="field tiny"></div></div>
-            </div>
-          </section>
         </div>
 
         <div class="tab-content" id="tab-notes">
@@ -1512,11 +1458,6 @@ body {
         <div class="tab-content" id="tab-actions">
           <section class="panel panel-actions">
             <div class="panel-header">ACTIONS / POWERS</div>
-            <div class="powers-header">
-              <span class="powers-heading powers-col-name">NAME</span>
-              <span class="powers-heading">LEVEL</span>
-              <span class="powers-heading">NOTES</span>
-            </div>
             <ul id="actions-body" class="powers-list"></ul>
           </section>
           <section class="panel">
@@ -1787,7 +1728,10 @@ function renderCharacter(char) {
 
   const classHd = classNode ? textOf(classNode, "hddie") : "";
   const classHdUsed = classNode ? numberOf(classNode, "hdused") : 0;
-  $("#char-hd").textContent = classHd ? `${classHd} (${classHdUsed} used)` : "";
+  const charHdEl = $("#char-hd");
+  if (charHdEl) {
+    charHdEl.textContent = classHd ? `${classHd} (${classHdUsed} used)` : "";
+  }
 
   // Abilities
   const abilitiesNode = char.querySelector("abilities");
@@ -1910,18 +1854,6 @@ function renderCharacter(char) {
     });
   }
 
-  // Encumbrance
-  const enc = char.querySelector("encumbrance");
-  if (enc) {
-    $("#enc-max").textContent = numberOf(enc, "max");
-    $("#enc-load").textContent = numberOf(enc, "load");
-    $("#enc-lpd").textContent = numberOf(enc, "liftpushdrag");
-  } else {
-    $("#enc-max").textContent = "";
-    $("#enc-load").textContent = "";
-    $("#enc-lpd").textContent = "";
-  }
-
   // Skills
   const skillsBody = $("#skills-body");
   skillsBody.innerHTML = "";
@@ -1953,6 +1885,14 @@ function renderCharacter(char) {
       const misc = numberOf(skill, "misc");
       const total = numberOf(skill, "total");
       const prof = numberOf(skill, "prof");
+
+      const profLabels = {
+        0: " ",
+        1: "Proficient",
+        2: "Expertise",
+        3: "Half Proficent"
+      };
+
       const li = document.createElement("li");
       li.className = "skill-row";
       li.innerHTML = `
@@ -1960,7 +1900,7 @@ function renderCharacter(char) {
           <span class="skill-label">${name}</span>
         </div>
         <div class="skill-stat">${statKey}</div>
-        <div class="skill-misc">${formatSigned(misc)}</div>
+        <div class="skill-misc">${profLabels[prof]}</div>
         <div class="skill-total">${formatSigned(total)}</div>
         <div class="skill-detail"></div>
       `;
@@ -2184,45 +2124,71 @@ function renderPowers(char) {
         spellsMain.appendChild(groupDiv);
       });
     } else {
-      // Actions / class features / feats displayed in powers list
+      // Actions / class features / feats displayed in table format
+      // Group by groupName only
+      const byNote = {};
       list.forEach((p) => {
-        const name = textOf(p, "name");
-        const level = numberOf(p, "level");
-        const descNode = p.querySelector("description");
-        const desc = descNode ? descNode.textContent.replace(/\s+/g, " ").trim() : "";
-        const row = document.createElement("li");
-        row.className = "power-row";
-        const noteBits = [];
-        const type = textOf(p, "type");
-        if (groupName) noteBits.push(groupName);
-        if (type) noteBits.push(type);
-        const recharge = textOf(p, "recharge");
-        if (recharge) noteBits.push(recharge);
-        row.innerHTML = `
-          <div class="power-name">${name}</div>
-          <div class="power-level">${level || "—"}</div>
-          <div class="power-note">${noteBits.join(" | ") || "—"}</div>
-          <div class="power-detail"></div>
+        const noteKey = groupName || "Other";
+        if (!byNote[noteKey]) byNote[noteKey] = [];
+        byNote[noteKey].push(p);
+      });
+
+      Object.keys(byNote).forEach((noteKey) => {
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "panel power-group";
+        const header = document.createElement("div");
+        header.className = "panel-header";
+        header.textContent = noteKey;
+        groupDiv.appendChild(header);
+
+        const body = document.createElement("div");
+        body.className = "panel-body";
+        const table = document.createElement("table");
+        table.className = "table";
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Level</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
         `;
-        if (desc) {
-          const detail = row.querySelector(".power-detail");
-          row.addEventListener("click", () => {
-            if (!detail) return;
-            if (row.classList.contains("expanded")) {
-              row.classList.remove("expanded");
-              detail.textContent = "";
-              return;
-            }
-            detail.innerHTML = `
-              <div class="detail-title">${name}</div>
-              <div class="detail-body">${desc}</div>
-            `;
-            row.classList.add("expanded");
-          });
-        } else {
-          row.classList.add("power-row-static");
-        }
-        actionsContainer.appendChild(row);
+        const tbody = table.querySelector("tbody");
+        byNote[noteKey].forEach((p) => {
+          const tr = document.createElement("tr");
+          const name = textOf(p, "name");
+          const level = numberOf(p, "level");
+          const descNode = p.querySelector("description");
+          const desc = descNode ? descNode.textContent.replace(/\s+/g, " ").trim() : "";
+
+          const noteBits = [];
+          const type = textOf(p, "type");
+          if (type) noteBits.push(type);
+          const recharge = textOf(p, "recharge");
+          if (recharge) noteBits.push(recharge);
+          const notes = noteBits.join(" | ") || "—";
+
+          tr.innerHTML = `
+            <td><span class="cell-label">${name}</span></td>
+            <td>${level || "—"}</td>
+            <td>${notes}</td>
+          `;
+          if (desc) {
+            tr.addEventListener("click", () => {
+              const html = `
+                <div class="detail-title">${name}</div>
+                <div class="detail-body">${desc}</div>
+              `;
+              toggleDetailRow(tr, 3, html);
+            });
+          }
+          tbody.appendChild(tr);
+        });
+        body.appendChild(table);
+        groupDiv.appendChild(body);
+        actionsContainer.appendChild(groupDiv);
       });
     }
   });

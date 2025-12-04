@@ -26,6 +26,72 @@ function formatSigned(value) {
   return n > 0 ? `+${n}` : String(n);
 }
 
+function normalizeBackgroundName(value) {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^reference\.backgrounddata/i.test(trimmed)) {
+    return "";
+  }
+  return trimmed;
+}
+
+const ABILITY_SHORT = {
+  strength: "str",
+  dexterity: "dex",
+  constitution: "con",
+  intelligence: "int",
+  wisdom: "wis",
+  charisma: "cha",
+};
+
+const SKILL_DISPLAY_ORDER = [
+  "Acrobatics",
+  "Animal Handling",
+  "Arcana",
+  "Athletics",
+  "Deception",
+  "History",
+  "Insight",
+  "Intimidation",
+  "Investigation",
+  "Medicine",
+  "Nature",
+  "Perception",
+  "Performance",
+  "Persuasion",
+  "Religion",
+  "Sleight of Hand",
+  "Stealth",
+  "Survival",
+];
+
+const SKILL_ORDER_MAP = SKILL_DISPLAY_ORDER.reduce((acc, name, index) => {
+  acc[name.toLowerCase()] = index;
+  return acc;
+}, {});
+
+const SKILL_DESCRIPTIONS = {
+  "Acrobatics": "Your Dexterity (Acrobatics) check covers your attempt to stay on your feet in a tricky situation, such as when you're trying to run across a sheet of ice, balance on a tightrope, or stay upright on a rocking ship's deck. The DM might also call for a Dexterity (Acrobatics) check to see if you can perform acrobatic stunts, including dives, rolls, somersaults, and flips.",
+  "Animal Handling": "When there is any question whether you can calm down a domesticated animal, keep a mount from getting spooked, or intuit an animal's intentions, the DM might call for a Wisdom (Animal Handling) check. You also make a Wisdom (Animal Handling) check to control your mount when you attempt a risky maneuver.",
+  "Arcana": "Your Intelligence (Arcana) check measures your ability to recall lore about spells, magic items, eldritch symbols, magical traditions, the planes of existence, and the inhabitants of those planes.",
+  "Athletics": "Your Strength (Athletics) check covers difficult situations you encounter while climbing, jumping, or swimming.",
+  "Deception": "Your Charisma (Deception) check determines whether you can convincingly hide the truth, either verbally or through your actions. This deception can encompass everything from misleading others through ambiguity to telling outright lies. Typical situations include trying to fast-talk a guard, con a merchant, earn money through gambling, pass yourself off in a disguise, dull someone's suspicions with false assurances, or maintain a straight face while telling a blatant lie.",
+  "History": "Your Intelligence (History) check measures your ability to recall lore about historical events, legendary people, ancient kingdoms, past disputes, recent wars, and lost civilizations.",
+  "Insight": "Your Wisdom (Insight) check decides whether you can determine the true intentions of a creature, such as when searching out a lie or predicting someone's next move. Doing so involves gleaning clues from body language, speech habits, and changes in mannerisms.",
+  "Intimidation": "When you attempt to influence someone through overt threats, hostile actions, and physical violence, the DM might ask you to make a Charisma (Intimidation) check. Examples include trying to pry information out of a prisoner, convincing street thugs to back down from a confrontation, or using the edge of a broken bottle to convince a sneering vizier to reconsider a decision.",
+  "Investigation": "When you look around for clues and make deductions based on those clues, you make an Intelligence (Investigation) check. You might deduce the location of a hidden object, discern from the appearance of a wound what kind of weapon dealt it, or determine the weakest point in a tunnel that could cause it to collapse. Poring through ancient scrolls in search of a hidden fragment of knowledge might also call for an Intelligence (Investigation) check.",
+  "Medicine": "A Wisdom (Medicine) check lets you try to stabilize a dying companion or diagnose an illness.",
+  "Nature": "Your Intelligence (Nature) check measures your ability to recall lore about terrain, plants and animals, the weather, and natural cycles.",
+  "Perception": "Your Wisdom (Perception) check lets you spot, hear, or otherwise detect the presence of something. It measures your general awareness of your surroundings and the keenness of your senses. For example, you might try to hear a conversation through a closed door, eavesdrop under an open window, or hear monsters moving stealthily in the forest. Or you might try to spot things that are obscured or easy to miss, whether they are orcs lying in ambush on a road, thugs hiding in the shadows of an alley, or candlelight under a closed secret door.",
+  "Performance": "Your Charisma (Performance) check determines how well you can delight an audience with music, dance, acting, storytelling, or some other form of entertainment.",
+  "Persuasion": "When you attempt to influence someone or a group of people with tact, social graces, or good nature, the DM might ask you to make a Charisma (Persuasion) check. Typically, you use persuasion when acting in good faith, to foster friendships, make cordial requests, or exhibit proper etiquette. Examples of persuading others include convincing a chamberlain to let your party see the king, negotiating peace between warring tribes, or inspiring a crowd of townsfolk.",
+  "Religion": "Your Intelligence (Religion) check measures your ability to recall lore about deities, rites and prayers, religious hierarchies, holy symbols, and the practices of secret cults.",
+  "Sleight of Hand": "Whenever you attempt an act of legerdemain or manual trickery, such as planting something on someone else or concealing an object on your person, make a Dexterity (Sleight of Hand) check. The DM might also call for a Dexterity (Sleight of Hand) check to determine whether you can lift a coin purse off another person or slip something out of another person's pocket.",
+  "Stealth": "Make a Dexterity (Stealth) check when you attempt to conceal yourself from enemies, slink past guards, slip away without being noticed, or sneak up on someone without being seen or heard.",
+  "Survival": "The DM might ask you to make a Wisdom (Survival) check to follow tracks, hunt wild game, guide your group through frozen wastelands, identify signs that owlbears live nearby, predict the weather, or avoid quicksand and other natural hazards.",
+};
+
 function groupChildren(node) {
   const result = [];
   node && node.childNodes.forEach((child) => {
@@ -45,24 +111,27 @@ function toggleDetailRow(row, colSpan, html) {
   }
   const detail = document.createElement("tr");
   detail.className = "detail-row";
-  detail.innerHTML = `<td colspan="${colSpan}" class="detail-cell">${html}</td>`;
+  detail.innerHTML = `<td colspan="${colSpan}" class="detail-cell"><div class="detail-card">${html}</div></td>`;
   row.parentElement.insertBefore(detail, row.nextSibling);
   row.classList.add("expanded");
 }
 
 function getSkillDescription(name) {
-  const skills = (window.Descriptions && window.Descriptions.skills) || {};
-  return skills[name] || "Checks with this skill use one of your abilities and may be modified by proficiency and circumstances.";
+  if (!name) return "Checks with this skill use one of your abilities and may be modified by proficiency and circumstances.";
+  return SKILL_DESCRIPTIONS[name] || "Checks with this skill use one of your abilities and may be modified by proficiency and circumstances.";
 }
 
 function readableAbilityName(statKey) {
   const key = (statKey || "").toLowerCase();
-  if (key === "strength" || key === "str") return "Strength";
-  if (key === "dexterity" || key === "dex") return "Dexterity";
-  if (key === "constitution" || key === "con") return "Constitution";
-  if (key === "intelligence" || key === "int") return "Intelligence";
-  if (key === "wisdom" || key === "wis") return "Wisdom";
-  if (key === "charisma" || key === "cha") return "Charisma";
+  const map = {
+    strength: "Strength",
+    dexterity: "Dexterity",
+    constitution: "Constitution",
+    intelligence: "Intelligence",
+    wisdom: "Wisdom",
+    charisma: "Charisma",
+  };
+  return map[key] || statKey || "";
   return statKey || "";
 }
 
@@ -119,17 +188,34 @@ function handleFileSelect(evt) {
 
 function renderCharacter(char) {
   // Header
-  $("#char-name").textContent = textOf(char, "name");
+  const charNameNode = char.querySelector(":scope > name");
+  $("#char-name").textContent = charNameNode ? charNameNode.textContent : "";
 
   const classNode = char.querySelector("classes > *");
   $("#char-class").textContent = classNode ? textOf(classNode, "name") : "";
   $("#char-level").textContent = classNode ? numberOf(classNode, "level") : numberOf(char, "level");
 
   $("#char-race").textContent = textOf(char, "racename") || textOf(char, "race");
-  $("#char-background").textContent = textOf(char, "backgroundlink > recordname");
+  const rawBackground = textOf(char, "backgroundlink > recordname");
+  $("#char-background").textContent = normalizeBackgroundName(rawBackground);
 
   const hpNode = char.querySelector("hp");
-  $("#char-hp").textContent = hpNode ? numberOf(hpNode, "total") : "";
+  const hpWounds = hpNode ? numberOf(hpNode, "wounds", NaN) : NaN;
+  const hpTotal = hpNode ? numberOf(hpNode, "total", NaN) : NaN;
+  const hpTemp = hpNode ? numberOf(hpNode, "temporary", NaN) : NaN;
+  const currentHp = Number.isFinite(hpTotal) && Number.isFinite(hpWounds) ? hpTotal - hpWounds : hpTotal;
+
+  const setHpField = (selector, value) => {
+    const el = $(selector);
+    if (el) {
+      el.textContent = Number.isFinite(value) ? value : "";
+    }
+  };
+
+  $("#char-hp").textContent = Number.isFinite(currentHp) ? currentHp : "";
+  setHpField("#hp-max", hpTotal);
+  setHpField("#hp-wounds", hpWounds);
+  setHpField("#hp-temp", hpTemp);
 
   const acNode = char.querySelector("defenses > ac");
   $("#char-ac").textContent = acNode ? numberOf(acNode, "total") : "";
@@ -155,14 +241,22 @@ function renderCharacter(char) {
       const dataNode = abilitiesNode.querySelector(abilityKey);
       const scoreEl = el.querySelector(".ability-score");
       const modEl = el.querySelector(".ability-mod");
+      const saveEl = $("#save-" + (ABILITY_SHORT[abilityKey] || abilityKey));
       if (dataNode) {
         const score = numberOf(dataNode, "score");
         const bonus = numberOf(dataNode, "bonus");
         scoreEl.textContent = score || "";
         modEl.textContent = bonus >= 0 ? `+${bonus}` : String(bonus);
+        if (saveEl) {
+          const saveValue = numberOf(dataNode, "save", NaN);
+          saveEl.textContent = formatSigned(saveValue);
+        }
       } else {
         scoreEl.textContent = "";
         modEl.textContent = "";
+        if (saveEl) {
+          saveEl.textContent = "";
+        }
       }
     });
   }
@@ -200,34 +294,48 @@ function renderCharacter(char) {
       const count = numberOf(item, "count", 1);
       const name = textOf(item, "name");
       const type = textOf(item, "type");
-      const loc = numberOf(item, "carried", 0) === 2 ? "Equipped" : numberOf(item, "carried", 0) === 1 ? "Carried" : "Stored";
-      const weight = numberOf(item, "weight", 0) * (count || 1);
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${count || 1}</td>
-        <td><span class="cell-label">${name}</span></td>
-        <td>${type}</td>
-        <td>${loc}</td>
-        <td>${weight}</td>
+      const locRaw = numberOf(item, "carried", 0);
+      const loc = locRaw === 2 ? "Equipped" : locRaw === 1 ? "Carried" : "Stored";
+      const weightEach = numberOf(item, "weight", 0);
+      const weightTotal = (count || 1) * weightEach;
+      const row = document.createElement("li");
+      row.className = "inventory-row";
+      row.innerHTML = `
+        <div class="inventory-name">
+          <span class="inventory-count">${count || 1}</span>
+          <span class="inventory-label">${name}</span>
+        </div>
+        <div class="inventory-type">${type || ""}</div>
+        <div class="inventory-loc">${loc}</div>
+        <div class="inventory-weight">${weightTotal || 0}</div>
+        <div class="inventory-detail"></div>
       `;
-      tr.addEventListener("click", () => {
-        const cost = textOf(item, "cost");
+      const detailEl = row.querySelector(".inventory-detail");
+      row.addEventListener("click", () => {
+        if (!detailEl) return;
+        if (row.classList.contains("expanded")) {
+          row.classList.remove("expanded");
+          detailEl.innerHTML = "";
+          return;
+        }
+        const parts = [];
+        if (type) parts.push(type);
         const subtype = textOf(item, "subtype");
-        const headerBits = [];
-        if (type) headerBits.push(type);
-        if (subtype) headerBits.push(subtype);
-        if (cost) headerBits.push(`Cost ${cost}`);
-        headerBits.push(`Weight ${weight}`);
-        const headerLine = headerBits.join(" | ");
+        if (subtype) parts.push(subtype);
+        const cost = textOf(item, "cost");
+        if (cost) parts.push(`Cost ${cost}`);
+        const weightStr = weightEach ? `${weightEach} ea` : "";
+        if (weightStr) parts.push(`Weight ${weightStr}`);
+        const headerLine = parts.join(" | ");
         const desc = getItemDescription(name, item);
-        const html = `
+        detailEl.innerHTML = `
           <div class="detail-title">${name}</div>
           <div class="detail-header">${headerLine}</div>
           <div class="detail-body">${desc}</div>
         `;
-        toggleDetailRow(tr, 5, html);
+        row.classList.add("expanded");
       });
-      invBody.appendChild(tr);
+      invBody.appendChild(row);
     });
   }
 
@@ -272,54 +380,71 @@ function renderCharacter(char) {
   }
   const profBonus = numberOf(char, "profbonus", 0);
   if (skillList) {
-    groupChildren(skillList).forEach((skill) => {
-      const name = textOf(skill, "name");
+    const skills = groupChildren(skillList).map((skill) => ({
+      node: skill,
+      name: textOf(skill, "name"),
+    }));
+
+    skills.sort((a, b) => {
+      const indexA = SKILL_ORDER_MAP[a.name?.toLowerCase()] ?? Number.POSITIVE_INFINITY;
+      const indexB = SKILL_ORDER_MAP[b.name?.toLowerCase()] ?? Number.POSITIVE_INFINITY;
+      if (indexA !== indexB) return indexA - indexB;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
+    skills.forEach(({ node: skill, name }) => {
       const statKey = textOf(skill, "stat");
       const misc = numberOf(skill, "misc");
       const total = numberOf(skill, "total");
       const prof = numberOf(skill, "prof");
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><span class="cell-label">${name}</span></td>
-        <td>${statKey}</td>
-        <td>${misc}</td>
-        <td>${total}</td>
+      const li = document.createElement("li");
+      li.className = "skill-row";
+      li.innerHTML = `
+        <div class="skill-name">
+          <span class="skill-label">${name}</span>
+        </div>
+        <div class="skill-stat">${statKey}</div>
+        <div class="skill-misc">${formatSigned(misc)}</div>
+        <div class="skill-total">${formatSigned(total)}</div>
+        <div class="skill-detail"></div>
       `;
-      const label = tr.querySelector(".cell-label");
-      if (label) {
-        label.style.cursor = "pointer";
-        label.addEventListener("click", (evt) => {
-          evt.stopPropagation();
-          const abilityName = readableAbilityName(statKey);
-          const abilityKey = (statKey || "").toLowerCase();
-          const abilityMod = abilityMods[abilityKey];
-          const parts = [];
-          parts.push(`Total ${formatSigned(total)}`);
-          if (abilityName) {
-            if (Number.isFinite(abilityMod)) {
-              parts.push(`Ability ${abilityName} ${formatSigned(abilityMod)}`);
-            } else {
-              parts.push(`Ability ${abilityName}`);
-            }
+      const detailEl = li.querySelector(".skill-detail");
+      li.addEventListener("click", () => {
+        if (!detailEl) return;
+        if (li.classList.contains("expanded")) {
+          li.classList.remove("expanded");
+          detailEl.innerHTML = "";
+          return;
+        }
+        const abilityName = readableAbilityName(statKey);
+        const abilityKey = (statKey || "").toLowerCase();
+        const abilityMod = abilityMods[abilityKey];
+        const parts = [];
+        parts.push(`Total ${formatSigned(total)}`);
+        if (abilityName) {
+          if (Number.isFinite(abilityMod)) {
+            parts.push(`Ability ${abilityName} ${formatSigned(abilityMod)}`);
+          } else {
+            parts.push(`Ability ${abilityName}`);
           }
-          if (prof) {
-            const profTotal = profBonus * prof;
-            parts.push(`Proficiency ${formatSigned(profTotal)}`);
-          }
-          if (misc) {
-            parts.push(`Misc ${formatSigned(misc)}`);
-          }
-          const headerLine = parts.join(" | ");
-          const desc = getSkillDescription(name);
-          const html = `
-            <div class="detail-title">${name}</div>
-            <div class="detail-header">${headerLine}</div>
-            <div class="detail-body">${desc}</div>
-          `;
-          toggleDetailRow(tr, 4, html);
-        });
-      }
-      skillsBody.appendChild(tr);
+        }
+        if (prof) {
+          const profTotal = profBonus * prof;
+          parts.push(`Proficiency ${formatSigned(profTotal)}`);
+        }
+        if (misc) {
+          parts.push(`Misc ${formatSigned(misc)}`);
+        }
+        const headerLine = parts.join(" | ");
+        const desc = getSkillDescription(name);
+        detailEl.innerHTML = `
+          <div class="detail-title">${name}</div>
+          <div class="detail-header">${headerLine}</div>
+          <div class="detail-body">${desc}</div>
+        `;
+        li.classList.add("expanded");
+      });
+      skillsBody.appendChild(li);
     });
   }
 
@@ -348,32 +473,15 @@ function renderTextList(char, listName, selector) {
   if (!listNode) return;
 
   groupChildren(listNode).forEach((item) => {
-    const li = document.createElement("li");
     const name = textOf(item, "name");
     const textNode = item.querySelector("text");
-    let plain = "";
+    let detail = "";
     if (textNode) {
-      plain = textNode.textContent.replace(/\s+/g, " ").trim();
+      detail = textNode.textContent.replace(/\s+/g, " ").trim();
     }
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "item-name";
-    nameSpan.textContent = name;
-    li.appendChild(nameSpan);
-
-    if (plain) {
-      const span = document.createElement("span");
-      span.className = "item-text";
-      span.textContent = plain;
-      span.style.display = "none";
-
-      nameSpan.addEventListener("click", () => {
-        const isHidden = span.style.display === "none";
-        span.style.display = isHidden ? "block" : "none";
-      });
-
-      li.appendChild(span);
-    }
-    container.appendChild(li);
+    const note = abilityNoteForItem(item);
+    const row = buildAbilityRow(name, note, detail);
+    container.appendChild(row);
   });
 }
 
@@ -384,10 +492,44 @@ function renderSimpleList(char, listName, selector) {
   if (!listNode) return;
 
   groupChildren(listNode).forEach((item) => {
-    const li = document.createElement("li");
-    li.textContent = textOf(item, "name");
-    container.appendChild(li);
+    const name = textOf(item, "name");
+    const note = abilityNoteForItem(item);
+    const row = buildAbilityRow(name, note, "");
+    container.appendChild(row);
   });
+}
+
+function abilityNoteForItem(item) {
+  return textOf(item, "source") || textOf(item, "type") || textOf(item, "shortdescription") || "";
+}
+
+function buildAbilityRow(name, noteText, detailText) {
+  const li = document.createElement("li");
+  li.className = "ability-row";
+
+  const nameDiv = document.createElement("div");
+  nameDiv.className = "ability-name";
+  nameDiv.textContent = name || "Unnamed";
+  li.appendChild(nameDiv);
+
+  const noteDiv = document.createElement("div");
+  noteDiv.className = "ability-note";
+  noteDiv.textContent = noteText || "—";
+  li.appendChild(noteDiv);
+
+  if (detailText) {
+    const detailDiv = document.createElement("div");
+    detailDiv.className = "ability-detail";
+    detailDiv.textContent = detailText;
+    li.appendChild(detailDiv);
+    li.addEventListener("click", () => {
+      li.classList.toggle("expanded");
+    });
+  } else {
+    li.classList.add("ability-row-static");
+  }
+
+  return li;
 }
 
 function groupPowersByNamePrefix(powersNode) {
@@ -486,46 +628,46 @@ function renderPowers(char) {
         spellsMain.appendChild(groupDiv);
       });
     } else {
-      // Actions / class features / feats
-      const groupDiv = document.createElement("div");
-      groupDiv.className = "action-group";
-      const title = document.createElement("div");
-      title.className = "action-group-title";
-      title.textContent = groupName;
-      groupDiv.appendChild(title);
-
+      // Actions / class features / feats displayed in powers list
       list.forEach((p) => {
         const name = textOf(p, "name");
-        const level = numberOf(p, "level", 0);
+        const level = numberOf(p, "level");
         const descNode = p.querySelector("description");
         const desc = descNode ? descNode.textContent.replace(/\s+/g, " ").trim() : "";
-        const row = document.createElement("div");
-        row.className = "action-item";
-        const titleLine = document.createElement("div");
-        titleLine.className = "action-item-name";
-        const labelSpan = document.createElement("span");
-        labelSpan.textContent = level ? `${name} (Lv ${level})` : name;
-        titleLine.appendChild(labelSpan);
-
-        row.appendChild(titleLine);
-
+        const row = document.createElement("li");
+        row.className = "power-row";
+        const noteBits = [];
+        const type = textOf(p, "type");
+        if (groupName) noteBits.push(groupName);
+        if (type) noteBits.push(type);
+        const recharge = textOf(p, "recharge");
+        if (recharge) noteBits.push(recharge);
+        row.innerHTML = `
+          <div class="power-name">${name}</div>
+          <div class="power-level">${level || "—"}</div>
+          <div class="power-note">${noteBits.join(" | ") || "—"}</div>
+          <div class="power-detail"></div>
+        `;
         if (desc) {
-          const meta = document.createElement("div");
-          meta.className = "action-item-meta";
-          meta.textContent = desc;
-          meta.style.display = "none";
-
-          titleLine.addEventListener("click", () => {
-            const isHidden = meta.style.display === "none";
-            meta.style.display = isHidden ? "block" : "none";
+          const detail = row.querySelector(".power-detail");
+          row.addEventListener("click", () => {
+            if (!detail) return;
+            if (row.classList.contains("expanded")) {
+              row.classList.remove("expanded");
+              detail.textContent = "";
+              return;
+            }
+            detail.innerHTML = `
+              <div class="detail-title">${name}</div>
+              <div class="detail-body">${desc}</div>
+            `;
+            row.classList.add("expanded");
           });
-
-          row.appendChild(meta);
+        } else {
+          row.classList.add("power-row-static");
         }
-        groupDiv.appendChild(row);
+        actionsContainer.appendChild(row);
       });
-
-      actionsContainer.appendChild(groupDiv);
     }
   });
 }
